@@ -32,7 +32,9 @@ This tool is designed to "let the computer do the work."
 2️⃣ Paste settings like this:
 
 gmt+8
+
 sleep 23-8
+
 busy 9-18
 
 This means:
@@ -99,7 +101,9 @@ Mobile version
 2️⃣ 貼上像這樣的設定文字：
 
 gmt+8
+
 sleep 23-8
+
 busy 9-18
 
 
