@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>誰有空? 工具</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 120px;
+    }
+    button {
+      padding: 8px 12px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>誰有空? 工具（MVP）</h1>
+
+<label>貼上設定文字：</label>
+<textarea id="configInput"></textarea>
+
+<button id="checkBtn">查看當前狀態</button>
+
+<div id="result"></div>
+
+<script>
+
+// ======= 讀取/存儲 ===========
+function saveConfig(text) {
+  localStorage.setItem('whoIsFreeConfig', text);
+}
+
+function getSavedConfig() {
+  return localStorage.getItem('whoIsFreeConfig') || '';
+}
+
+// ======= 解析設定 ============
+function parseConfig(text) {
+  const lines = text
+    .trim()
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  const config = { gmt: 0, sleep: null, busy: null };
+
+  for (const line of lines) {
+    if (line.toLowerCase().startsWith('gmt')) {
+      config.gmt = parseInt(line.replace(/[^0-9\+\-]/g, ''), 10);
+    }
+    if (line.toLowerCase().startsWith('sleep')) {
+      const parts = line.replace(/[^0-9-]/g, '').split('-');
+      config.sleep = { start: parseInt(parts[0]), end: parseInt(parts[1]) };
+    }
+    if (line.toLowerCase().startsWith('busy')) {
+      const parts = line.replace(/[^0-9-]/g, '').split('-');
+      config.busy = { start: parseInt(parts[0]), end: parseInt(parts[1]) };
+    }
+  }
+
+  return config;
+}
+
+// ======= 時間判斷 ===========
+function getCurrentHour(gmtOffset) {
+  const now = new Date();
+  const utcHour = now.getUTCHours();
+  return (utcHour + gmtOffset + 24) % 24;
+}
+
+function isInRange(hour, start, end) {
+  if (start < end) return hour >= start && hour < end;
+  return hour >= start || hour < end;
+}
+
+function getStatus(text) {
+  const config = parseConfig(text);
+  const hour = getCurrentHour(config.gmt);
+
+  if (config.sleep && isInRange(hour, config.sleep.start, config.sleep.end)) return '睡覺 😴';
+  if (config.busy && isInRange(hour, config.busy.start, config.busy.end)) return '忙碌 🟡';
+  return '空閒 🟢';
+}
+
+// ======= 事件綁定 ===========
+const textarea = document.getElementById('configInput');
+const btn = document.getElementById('checkBtn');
+const resultDiv = document.getElementById('result');
+
+textarea.value = getSavedConfig();
+
+btn.addEventListener('click', () => {
+  const text = textarea.value;
+  saveConfig(text);
+  resultDiv.textContent = '目前狀態：' + getStatus(text);
+});
+
+</script>
+
+</body>
+</html>
